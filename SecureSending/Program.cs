@@ -14,16 +14,16 @@ builder
 
 builder
     .Services
-    .AddControllers();
+    .AddControllersWithViews();
 
 builder
     .Services
-    .AddEndpointsApiExplorer();
-    //.AddSwaggerGen();
+    .AddEndpointsApiExplorer()
+    .AddSwaggerGen();
 
 builder
     .Services
-    .AddTransient<IDbRepository, DbRepository>()
+    .AddTransient<IDbService, DbService>()
     .AddTransient<IGenerateSecureLink, GenerateSecureLink>();
 
 var app = builder.Build();
@@ -31,8 +31,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    //app.UseSwagger();
-    //app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app
@@ -42,7 +42,7 @@ app
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Credentials}/{action=Get}/{uniqueLink?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "api",

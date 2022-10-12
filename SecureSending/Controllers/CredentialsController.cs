@@ -4,42 +4,44 @@
     using SecureSending.Models;
     using Services.Data;
 
-    [Route("/Credentials")]
     public class CredentialsController : Controller
     {
-        private readonly DbRepository _repository;
+        private readonly IDbService _repository;
 
-        public CredentialsController(DbRepository repository)
+        public CredentialsController(IDbService repository)
         {
             _repository = repository;
         }
 
-        [HttpGet]
-        [Route("get/{uniqueLink}")]
-        public async Task<IActionResult> Get([FromRoute] string uniqueLink, int clicks = 1)
-        {         
+        public async Task<IActionResult> Index(string id)
+        {
+            //if(clicks > 2)
+            //{
+            //    return BadRequest();
+            //}
 
-            if(clicks > 2)
-            {
-                return BadRequest();
-            }
+            //var user = await _repository.GetUserByUniqueLinkAsync(id);
 
-            var user = await _repository.GetUserCredentialsByUniqueLinkAsync(uniqueLink);
+            //if (user == null)
+            //{
+            //    return NotFound("User Not Found");
+            //}
 
-            if (user == null)
-            {
-                return NotFound();
-            }
+            //var userCredentials = new CredentialsDto()
+            //{
+            //    Username = user.Username,
+            //    Password = user.Password
+            //};
 
             var userCredentials = new CredentialsDto()
             {
-                Username = user.Username,
-                Password = user.Password
+                Username = "Username",
+                Password = "Password"
             };
 
-            clicks++;
+            //clicks++;
 
-            return View(userCredentials);
+            return this.View(userCredentials);
         }
     }
 }

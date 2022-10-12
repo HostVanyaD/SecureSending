@@ -7,13 +7,13 @@ namespace SecureSending.Controllers
     // Authorized Controller !!!
     [ApiController]
     [Route("/api")]
-    public class UsersApiController : Controller
+    public class UsersApiController : ControllerBase
     {
         private readonly IGenerateSecureLink _generateSecureLink;
-        private readonly IDbRepository _usersRepository;
+        private readonly IDbService _usersRepository;
 
         public UsersApiController(
-            IDbRepository repository, 
+            IDbService repository, 
             IGenerateSecureLink generateSecureLink)
         {
             _usersRepository = repository;
@@ -21,8 +21,8 @@ namespace SecureSending.Controllers
         }
 
         [HttpGet]
-        [Route("get/users")]
-        public async Task<IActionResult> Get()
+        [Route("getAll")]
+        public async Task<IActionResult> GetAll()
         {
             var users = await _usersRepository.GetAllAsync();
 
@@ -36,9 +36,9 @@ namespace SecureSending.Controllers
 
         [HttpGet]
         [Route("generateUniqueLink")]
-        public async Task<IActionResult> GenerateUniqueLink(string id) 
+        public async Task<IActionResult> GenerateUniqueLink(string username, string password) 
         { 
-            var user = await _usersRepository.GetByIdAsync(id);
+            var user = await _usersRepository.GetByUsernameAndPassAsync(username, password);
 
             if (user == null)
             {
@@ -47,13 +47,13 @@ namespace SecureSending.Controllers
 
             var generatedLinkExtension = _generateSecureLink.GetSecureExtension();
 
-            var baseUrl = $"{Request.Scheme}://{Request.Host.Value}/";
+            //var baseUrl = $"{Request.Scheme}://{Request.Host.Value}/";
 
-            var location = $"{baseUrl}Credentials/Get/{generatedLinkExtension}";
+            //var location = $"{baseUrl}Credentials/Index/{generatedLinkExtension}";
 
-            user.Link = location;
+            user.Link = generatedLinkExtension;
 
-            _usersRepository.Save();
+            await _usersRepository.Save();
 
             return Ok(user);
         }
