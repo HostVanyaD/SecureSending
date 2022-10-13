@@ -24,7 +24,7 @@ builder
 builder
     .Services
     .AddTransient<IUserService, UserService>()
-    .AddTransient<IAccountService, AccountService>
+    .AddTransient<IAccountService, AccountService>()
     .AddTransient<IKeyGenerator, GenerateKey>();
 
 var app = builder.Build();

@@ -3,6 +3,8 @@
     using Microsoft.EntityFrameworkCore;
     using SecureSending.Models.Entities;
 
+    using static SecureSending.Models.DbConstants;
+
     public class UserService : IUserService
     {
         private readonly AppDbContext _context;
@@ -18,18 +20,40 @@
             return await _context.Users.ToListAsync();
         }
 
+        public async Task<(bool, string)> RegisterAccountAsync(string username, string password)
+        {
+            var userExists = await UserExistsAsync(username, password);
+
+            if (userExists)
+            {
+                return (false, AccountAlreadyExistsMessage);
+            }
+
+            var newAccount = new User()
+            {
+                Username = username,
+                Password = password
+            };
+
+            await _context.Users.AddAsync(newAccount);
+
+            await SaveAsync();
+
+            return (true, AccountRegisteredMessage);
+        }
+
         public async Task<User> GetByUsernameAndPassAsync(string username, string password)
         {
             return await _context.Users.SingleOrDefaultAsync(u => u.Username == username && u.Password == password);
         }
 
-        public async Task<User> GetByUniqueKeyAsync(string uniqueLink)
+        public async Task<(string, string)> GetUserCredentialsByUniqueKeyAsync(string key)
         {
             var users = await _context.Users.ToListAsync();
 
-            var user = users.Where(u => u.UniqueKey.Contains(uniqueLink)).FirstOrDefault();
+            var user = users.SingleOrDefault(u => u.UniqueKey == key);
 
-            return user;
+            return (user.Username, user.Password);
         }
 
         public async Task<bool> UserExistsAsync(string username, string password)
@@ -42,27 +66,27 @@
             return await _context.Users.AnyAsync(u => u.UniqueKey == key);
         }
 
-        public async Task<(bool, string)> SetAccountKey(string username, string password, string uniqueKey)
+        public async Task<(bool, string)> SetAccountKeyAsync(string username, string password, string uniqueKey)
         {
-            var user = await this.GetByUsernameAndPassAsync(username, password);
+            var user = await GetByUsernameAndPassAsync(username, password);
 
             if (user == null)
             {
-                return (false, "Account doesn't exist.");
+                return (false, AccountNotFoundMessage);
             }
 
-            var keyExists = await this.UniqueKeyExistsAsync(uniqueKey);
+            var keyExists = await UniqueKeyExistsAsync(uniqueKey);
 
             if (keyExists)
             {
-                return (false, "Key already exists. Please try to generate another key.");
+                return (false, KeyAlreadyExistsMessage);
             }
 
             user.UniqueKey = uniqueKey;
 
-            await this.SaveAsync();
+            await SaveAsync();
 
-            return (true, "Account key has been set successfully");
+            return (true, KeySetSuccessfulMessage);
         }
 
         public async Task SaveAsync()

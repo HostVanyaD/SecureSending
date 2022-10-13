@@ -1,47 +1,23 @@
 ﻿namespace SecureSending.Controllers
 {
     using Microsoft.AspNetCore.Mvc;
-    using SecureSending.DTO;
-    using SecureSending.Models;
+    using SecureSending.Services.Account;
+    using System.Net;
 
     public class CredentialsController : Controller
     {
-        //private readonly IDbService _repository;
+        private readonly IAccountService _accountService;
 
-        //public CredentialsController(IDbService repository)
-        //{
-        //    _repository = repository;
-        //}
+        public CredentialsController(IAccountService accountService)
+        {
+            _accountService = accountService;
+        }
 
-        //public async Task<IActionResult> Index(string id)
-        //{
-        //    //if(clicks > 2)
-        //    //{
-        //    //    return BadRequest();
-        //    //}
+        public async Task<IActionResult> Index(string id)
+        {
+            var credentials = await _accountService.GetCredentialsByKey(id);
 
-        //    var user = await _repository.GetByUniqueKeyAsync(id);
-
-        //    if (user == null)
-        //    {
-        //        return NotFound("User Not Found");
-        //    }
-
-        //    var userCredentials = new CredentialsDto()
-        //    {
-        //        Username = user.Username,
-        //        Password = user.Password
-        //    };
-
-        //    //var userCredentials = new CredentialsDto()
-        //    //{
-        //    //    Username = "Username",
-        //    //    Password = "Password"
-        //    //};
-
-        //    //clicks++;
-
-        //    return this.View(userCredentials);
-        //}
+            return View(credentials);
+        }
     }
 }
