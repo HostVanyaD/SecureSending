@@ -1,14 +1,13 @@
 ﻿namespace SecureSending.Services.Security
 {
     using System.Security.Cryptography;
-    using System.Net;
     using Microsoft.IdentityModel.Tokens;
 
     public class GenerateKey : IKeyGenerator
     {
         public string GetSecureKey()
         {
-            var randomNumber = new byte[150];
+            var randomNumber = new byte[100];
             string randomString = string.Empty;
 
             using (var rng = RandomNumberGenerator.Create())

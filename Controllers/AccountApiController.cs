@@ -25,33 +25,9 @@ namespace SecureSending.Controllers
                 return BadRequest();
             }
 
-            var (successful, message) = await _accountService.RegisterAccountAsync(credentials);
+            var key = await _accountService.RegisterAccountAsync(credentials);
 
-            if (successful == false)
-            {
-                return BadRequest(message);
-            }
-
-            return Ok(message);
-        }
-
-        [HttpPost]
-        [Route("generate-key")]
-        public async Task<IActionResult> GenerateAccountKey(CredentialsDto credentials)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-
-            var (successful, message) = await _accountService.GenerateUniqueKeyAsync(credentials);
-
-            if (successful == false)
-            {
-                return BadRequest(message);
-            }
-
-            return Ok(message);
+            return Ok(key);
         }
     }
 }

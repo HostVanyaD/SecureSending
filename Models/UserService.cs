@@ -3,10 +3,12 @@
     using Microsoft.EntityFrameworkCore;
     using SecureSending.Models.Entities;
 
-    using static SecureSending.Models.DbConstants;
 
     public class UserService : IUserService
     {
+        private const double HoursToLive = 48;
+        private const int ClicksAllowed = 2;
+
         private readonly AppDbContext _context;
 
         public UserService(AppDbContext context)
@@ -15,45 +17,40 @@
             Seed();
         }
 
-        public async Task<IEnumerable<User>> GetAllAsync()
+        public async Task RegisterAccountAsync(string username, string password, string key)
         {
-            return await _context.Users.ToListAsync();
-        }
-
-        public async Task<(bool, string)> RegisterAccountAsync(string username, string password)
-        {
-            var userExists = await UserExistsAsync(username, password);
-
-            if (userExists)
-            {
-                return (false, AccountAlreadyExistsMessage);
-            }
-
             var newAccount = new User()
             {
                 Username = username,
-                Password = password
+                Password = password,
+                UniqueKey = key
             };
 
             await _context.Users.AddAsync(newAccount);
 
             await SaveAsync();
-
-            return (true, AccountRegisteredMessage);
         }
 
-        public async Task<User> GetByUsernameAndPassAsync(string username, string password)
-        {
-            return await _context.Users.SingleOrDefaultAsync(u => u.Username == username && u.Password == password);
-        }
-
-        public async Task<(string, string)> GetUserCredentialsByUniqueKeyAsync(string key)
+        public async Task<string[]> GetUserCredentialsByUniqueKeyAsync(string key)
         {
             var users = await _context.Users.ToListAsync();
 
             var user = users.SingleOrDefault(u => u.UniqueKey == key);
 
-            return (user.Username, user.Password);
+            var timeNow = DateTime.UtcNow;
+
+            var lifeHours = (timeNow - user.KeyCreation).TotalHours;
+
+            if (lifeHours > HoursToLive || user.Clicks >= ClicksAllowed)
+            {
+                return null;
+            }
+
+            user.Clicks += 1;
+
+            _context.SaveChanges();
+
+            return new string[] { user.Username, user.Password };
         }
 
         public async Task<bool> UserExistsAsync(string username, string password)
@@ -64,29 +61,6 @@
         public async Task<bool> UniqueKeyExistsAsync(string key)
         {
             return await _context.Users.AnyAsync(u => u.UniqueKey == key);
-        }
-
-        public async Task<(bool, string)> SetAccountKeyAsync(string username, string password, string uniqueKey)
-        {
-            var user = await GetByUsernameAndPassAsync(username, password);
-
-            if (user == null)
-            {
-                return (false, AccountNotFoundMessage);
-            }
-
-            var keyExists = await UniqueKeyExistsAsync(uniqueKey);
-
-            if (keyExists)
-            {
-                return (false, KeyAlreadyExistsMessage);
-            }
-
-            user.UniqueKey = uniqueKey;
-
-            await SaveAsync();
-
-            return (true, KeySetSuccessfulMessage);
         }
 
         public async Task SaveAsync()
@@ -105,12 +79,16 @@
                 new User()
                 {
                     Username = "username1",
-                    Password = "samplePassword"
+                    Password = "samplePassword",
+                    UniqueKey = "dzBOUVhyYnpLN2J2WjdoRDJsYzU2UXJMdks3T1d0bjVmZFFqRFZQVFY4RFlpMUFCUmYyVVFGSUQ1bmJrSkkwRy9FRWZJcVZOZERKY2ZTN216djZHUjlicENRckdMT1ZNSGVFbGVEZlovOVBwanExMlQ1S2tQa2ViMGhlMzI3WWFycDJJR0E9PQ",
+                    KeyCreation = DateTime.UtcNow.AddDays(-4)
                 },
                 new User()
                 {
                     Username = "username2",
-                    Password = "samplePassword2"
+                    Password = "samplePassword2",
+                    UniqueKey = "kkBOUVhyYnpLN2J2WjdoRDJsYzU2UXJMdks3T1d0bjVmZFFqRFZQVFY4RFlpMUFCUmYyVVFGSUQ1bmJrSkkwRy9FRWZJcVZOZERKY2ZTN216djZHUjlicENRckdMT1ZNSGVFbGVEZlovOVBwanExMlQ1S2tQa2ViMGhlMzI3WWFycDJJR0E9PQ",
+                    KeyCreation = DateTime.UtcNow.AddDays(1)
                 });
 
             _context.SaveChanges();

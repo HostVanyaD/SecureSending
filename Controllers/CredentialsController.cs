@@ -2,7 +2,6 @@
 {
     using Microsoft.AspNetCore.Mvc;
     using SecureSending.Services.Account;
-    using System.Net;
 
     public class CredentialsController : Controller
     {
@@ -16,6 +15,11 @@
         public async Task<IActionResult> Index(string id)
         {
             var credentials = await _accountService.GetCredentialsByKey(id);
+
+            if (credentials == null)
+            {
+                return NotFound();
+            }
 
             return View(credentials);
         }

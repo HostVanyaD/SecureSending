@@ -15,28 +15,37 @@
             _keyGenerator = keyGenerator;
         }
 
-        public async Task<(bool, string)> RegisterAccountAsync(CredentialsDto credentials)
+        public async Task<string> RegisterAccountAsync(CredentialsDto credentials)
         {
-            return await _accounts.RegisterAccountAsync(credentials.Username, credentials.Password);
-        }
+            var userExists = await _accounts.UserExistsAsync(credentials.Username, credentials.Password);
 
-        public async Task<(bool, string)> GenerateUniqueKeyAsync(CredentialsDto credentials)
-        {
             var uniqueKey = _keyGenerator.GetSecureKey();
 
-            var (successful, message) = await _accounts.SetAccountKeyAsync(credentials.Username, credentials.Password, uniqueKey);
+            var keyExists = await _accounts.UniqueKeyExistsAsync(uniqueKey);
 
-            return (successful, message);
+            if (userExists || keyExists)
+            {
+                return null;
+            }
+
+            await _accounts.RegisterAccountAsync(credentials.Username, credentials.Password, uniqueKey);
+
+            return uniqueKey;
         }
 
         public async Task<CredentialsDto> GetCredentialsByKey(string key)
         {
             var credentials = await _accounts.GetUserCredentialsByUniqueKeyAsync(key);
 
+            if (credentials == null)
+            {
+                return null;
+            }
+
             var model = new CredentialsDto()
             {
-                Username = credentials.Item1,
-                Password = credentials.Item2
+                Username = credentials[0],
+                Password = credentials[1]
             };
 
             return model;
